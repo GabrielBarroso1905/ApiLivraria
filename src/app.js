@@ -1,55 +1,24 @@
 import express from "express";
+import conectaNaDatabase from "./config/dbConnect.js";
+import routes from "./routes/index.js";
 
-const app = express();
-app.use(express.json());//Middleware
+const conexao = await conectaNaDatabase();
 
-const livros = [
-    {
-        id: 1,
-        titulo: "Senhor dos Anéis"
-    },
-    {
-        id: 2,
-        titulo: "Hobbit"
-    },
-]
-
-function buscaLivro(id){
-    return livros.findIndex(livro =>{
-        return livro.id === Number(id);
-    });
-}
-
-
-app.get("/", (req, res) => {
-    res.status(200).send("Curso de Node.js");
+conexao.on("error", (erro) => {
+  console.error("erro de conexão", erro);
 });
 
-app.get("/livros", (req, res) => {
-    res.status(200).json(livros);
+conexao.once("open", () => {
+  console.log("Conexao com o banco feita com sucesso");
 })
 
-app.get("/livros/:id",(req,res)=>{
-    const index = buscaLivro(req.params.id);
-    res.status(200).json(livros[index])
-})
+const app = express();
+routes(app);
 
-app.put("/livros/:id",(req,res)=>{
-    const index = buscaLivro(req.params.id);
-    livros[index].titulo = req.body.titulo;
-    res.status(200).json(livros[index]);
-})
-
-app.delete('/livros/:id', (req, res) => {
-    const index = buscaLivro(req.params.id);
-    livros.splice(index, 1);
-    res.status(200).send('Livro removido com sucesso.');
-  });
-  
-
-app.post("/livros", (req, res) => {
-    livros.push(req.body);
-    res.status(201).send("livro Cadastrado com sucesso");
-})
+app.delete("/livros/:id", (req, res) => {
+  const index = buscaLivro(req.params.id);
+  livros.splice(index, 1);
+  res.status(200).send("livro removido com sucesso");
+});
 
 export default app;
